@@ -74,7 +74,7 @@ def create_app(config=None):
 
     @app.route('/api/v1/wallets', methods=['GET'])
     def get_wallets():
-        #try:
+        try:
             wallets = db.session.query(Bank).all()
             if wallets == None:
                 return "Кошельки не найдены"
@@ -85,8 +85,8 @@ def create_app(config=None):
                 data_list.append(wallet_data)
             return jsonify({'wallets':data_list})
         
-        #except:
-            #return "Ошибка при обработке данных"
+        except:
+            return "Ошибка при обработке данных"
         
     if __name__ == '__main__':
         app.run(host='0.0.0.0', debug=True)
