@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: bank_db
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+      - ./sql/query_1.sql:/docker-entrypoint-initdb.d/query_1.sql
+      - ./sql/query_2.sql:/docker-entrypoint-initdb.d/query_2.sql
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    ports:
+      - "5432:5432"
+
+  flask:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./flask
+    command: >
+      sh -c "flask db init || true && flask db migrate && flask db upgrade && flask run --host=0.0.0.0"
+    restart: unless-stopped
+    environment:
+      FLASK_APP: "flask/app:create_app"
+      FLASK_ENV: development
+      DATABASE_URL: postgresql://user:pass@postgres:5432/bank_db
+    depends_on:
+      - postgres
+    ports:
+        - "5000:5000"
+    volumes:
+      - .:/flask
+      - ./migrations:/flask/migrations
